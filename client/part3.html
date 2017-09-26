@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+    <script type="text/babel" >
+        "use strict";
+      
+      const user = `user${(Math.floor((Math.random() * 1000)) + 1)}`;
+      const socket = io.connect();
+      let draws = {};
+      const canvas = document.getElementById('myCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      //draw all shapes in stack
+      const draw = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        let keys = Object.keys(draws);
+        
+        for(let i = 0; i < keys.length; i++)
+        {
+          const drawCall = draws[keys[i]];
+          
+          ctx.beginPath();
+          ctx.arc(drawCall.x, drawCall.y, drawCall.rad, 0, 2 * Math.PI);
+          ctx.fillStyle = drawCall.fill;
+          ctx.fill();
+          //ctx.closePath();
+        }
+      }
+      
+      const setup = () => {
+        const time = new Date().getTime();
+        let x = Math.floor(Math.random() * canvas.width);
+        let y = Math.floor(Math.random() * canvas.height);
+        let fill = '#' + ("000000" + Math.random().toString(16).slice(2, 8).toUpperCase()).slice(-6); //code from http://www.daverabideau.com/blog/
+        draws[user] = {lastUpdate: time, x: x, y: y, rad: 20, fill: fill};
+      }
+      
+      //add parameters from server to draw stack
+      const handleDraw = (data) => {
+        if(!draws[data.name])
+        {
+          draws[data.name] = data.coords;
+        }
+        else if(data.coords.lastUpdate > draws[data.name].lastUpdate)
+        {
+          draws[data.name] = data.coords;
+        }
+        draw();
+      }
+      
+      // code from http://stackoverflow.com/questions/5203407/javascript-multiple-keys-pressed-at-once
+      var map = {};
+      onkeydown = onkeyup = (e) => {
+        e = e || event;
+        map[e.keyCode] = e.type == 'keydown';
+      }
+      
+      const keyHandler = (e) => {
+        const time = new Date().getTime();
+        
+        if(map[38] && map[39]) {
+          draws[user].lastUpdate = time;
+          draws[user].x += 3;
+          draws[user].y -= 3;
+        }
+        
+        else if(map[38] && map[37]) {
+          draws[user].lastUpdate = time;
+          draws[user].x -= 3;
+          draws[user].y -= 3;
+        }
+        
+        else if(map[37] && map[40]) {
+          draws[user].lastUpdate = time;
+          draws[user].x -= 3;
+          draws[user].y += 3;
+        }
+        
+        else if(map[39] && map[40]) {
+          draws[user].lastUpdate = time;
+          draws[user].x += 3;
+          draws[user].y += 3;
+        }
+        
+        else if(map[37]) {
+          draws[user].lastUpdate = time;
+          draws[user].x -= 5;
+        }
+        
+        else if(map[39]) {
+          draws[user].lastUpdate = time;
+          draws[user].x += 5;
+        }
+        
+        else if(map[38]) {
+          draws[user].lastUpdate = time;
+          draws[user].y -= 5;
+        }
+        
+        else if(map[40]) {
+          draws[user].lastUpdate = time;
+          draws[user].y += 5;
+        }
+        
+        socket.emit('draw', {name: user, coords: draws[user] });
+        
+        draw();
+      }
+    
+      const init = () => { 
+        socket.on('connect', () => {
+          // join room3
+          socket.emit('joinRoom', { room: 'room3' });
+          //add a circle to the data structure upon connecting
+          setup();
+          draw();
+        });
+        
+        document.onkeydown = keyHandler;
+        
+        socket.on('drawn', handleDraw);
+      };
+    
+    window.onload = init;
+    
+    </script>
+</head>
+<body>
+  <canvas id="myCanvas" width="600" height="400"></canvas>
+</body>
+</html>

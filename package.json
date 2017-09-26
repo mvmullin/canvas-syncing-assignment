@@ -1,0 +1,33 @@
+{
+  "name": "canvas-syncing-assignment",
+  "version": "1.0.0",
+  "engines": {
+    "node": "8.2.1",
+    "npm": "5.3.0"
+  },
+  "description": "introduction to techniques for updating data across several clients",
+  "main": "server.js",
+  "scripts": {
+    "start": "node ./src/server.js",
+    "pretest": "eslint ./src --fix",
+    "test": "echo \"Tests complete\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mvmullin/canvas-syncing-assignment.git"
+  },
+  "author": "Michael Mullin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mvmullin/canvas-syncing-assignment/issues"
+  },
+  "homepage": "https://github.com/mvmullin/canvas-syncing-assignment#readme",
+  "dependencies": {
+    "socket.io": "^2.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^4.7.1",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-plugin-import": "^2.7.0"
+  }
+}

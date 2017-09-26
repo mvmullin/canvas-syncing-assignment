@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+    <script type="text/babel" >
+        "use strict";
+        
+        const socket = io.connect();
+        let num = 0;
+
+        // increase the value and send update to server
+        const increaseNum = () => {
+          socket.emit('updateNumber', 5);
+        }
+        
+        const init = () => {
+          let counter = document.querySelector("#counter");
+          counter.innerText = "0";
+          
+          // Start increasing the value when successfully connected.
+          socket.on('connect', () => {
+            // join room1 
+            socket.emit('joinRoom', { room: 'room1' });
+            setInterval(increaseNum, 3000);
+          });
+          
+          // Update the value with data from the server
+          socket.on('updateNum', (data) => {
+            document.querySelector("#counter").innerHTML = data;
+          });
+        }
+        
+        window.onload = init;
+    
+    </script>
+</head>
+<body>
+  <h1>The current value is <span id="counter"></span></h1>
+</body>
+</html>

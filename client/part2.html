@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+    <script type="text/babel" >
+        "use strict";
+    
+      const socket = io.connect();
+      let draws = {};
+      const canvas = document.getElementById('myCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      //draw all shapes in stack
+      const draw = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        let keys = Object.keys(draws);
+        
+        for(let i = 0; i < keys.length; i++)
+        {
+          const drawCall = draws[keys[i]];
+          
+          ctx.beginPath();
+          ctx.arc(drawCall.x, drawCall.y, drawCall.rad, 0, 2 * Math.PI);
+          ctx.fillStyle = drawCall.fill;
+          ctx.fill();
+          //ctx.closePath();
+        }
+      }
+      
+      //send parameters to server
+      const addShape = () => {
+        let time = new Date().getTime();
+        const xCoord = Math.floor(Math.random() * canvas.width);
+        const yCoord = Math.floor(Math.random() * canvas.height);
+        let coords = {x: xCoord, y: yCoord, rad: 20, fill: "red"};
+        
+        socket.emit('draw', {time: time, coords: coords});
+      }
+      
+      //add parameters from server to draw stack
+      const handleDraw = (data) => {
+        draws[data.time] = data.coords;
+        draw();
+      }
+    
+      const init = () => {
+        socket.on('connect', () => {
+          // join room2
+          socket.emit('joinRoom', { room: 'room2' });
+          //add a circle to the data structure upon connecting
+          let time = new Date().getTime();
+          const xCoord = Math.floor(Math.random() * canvas.width);
+          const yCoord = Math.floor(Math.random() * canvas.height);
+          draws[time] = {x: xCoord, y: yCoord, rad: 50, fill: "cyan"};
+        
+          const draw = document.querySelector("#draw");
+          
+          //call addShape upon clicking draw button
+          draw.addEventListener('click', addShape);;
+        });
+        
+        socket.on('drawn', handleDraw);
+      };
+    
+    window.onload = init;
+    
+    </script>
+</head>
+<body>
+  <input id="draw" type="button" value="draw" />
+  <canvas id="myCanvas" width="600" height="400"></canvas>
+</body>
+</html>

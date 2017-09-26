@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+    <script type="text/babel" >
+        "use strict";
+      
+      const socket = io.connect();
+      const canvas = document.getElementById('myCanvas');
+      const ctx = canvas.getContext('2d');
+      let sendBufferCanvas;
+      let sendBufferCtx;
+      
+      const setup = () => {
+        sendBufferCanvas = document.createElement("canvas");
+        sendBufferCanvas.height = 400;
+        sendBufferCanvas.width = 600;
+        sendBufferCtx = sendBufferCanvas.getContext("2d");
+        
+        let x = Math.floor(Math.random() * canvas.width);
+        let y = Math.floor(Math.random() * canvas.height);
+        ctx.fillRect(x, y, 50, 50);
+        
+        x = Math.floor(Math.random() * canvas.width);
+        y = Math.floor(Math.random() * canvas.height);
+        sendBufferCtx.fillStyle = "red";
+        sendBufferCtx.fillRect(0, 0, 50, 50);
+        
+        const data = {
+          x: x,
+          y: y,
+          height: 400,
+          width: 600,
+          imgData: sendBufferCanvas.toDataURL()
+        };
+        
+        socket.emit("draw", data);
+      }
+      
+      //add parameters from server to draw stack
+      const handleDraw = (data) => {
+        let image = new Image();
+        
+        image.onload = () => {
+          ctx.save();
+          ctx.globalCompositeOperation = "source-over";
+          ctx.drawImage(image, data.x, data.y, data.width, data.height);
+          ctx.restore();
+        };
+        
+        image.src = data.imgData;
+      }
+    
+      const init = () => {
+        socket.on('connect', () => {
+          // join room4
+          socket.emit('joinRoom', { room: 'room4' });
+          setup();
+        });
+        
+        socket.on('drawn', handleDraw);
+      };
+    
+    window.onload = init;
+    
+    </script>
+</head>
+<body>
+  <canvas id="myCanvas" width="600" height="400"></canvas>
+</body>
+</html>
